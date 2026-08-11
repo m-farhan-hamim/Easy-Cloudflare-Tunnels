@@ -200,7 +200,7 @@ def list_account_tunnels():
 
     out = []
     for item in items:
-        if item.get("deleted_at"):
+        if _is_deleted(item.get("deleted_at")):
             continue
         out.append({
             "id": item.get("id"),
@@ -208,6 +208,16 @@ def list_account_tunnels():
             "created_at": item.get("created_at"),
         })
     return out
+
+
+def _is_deleted(deleted_at):
+    """cloudflared represents "not deleted" as Go's zero time value
+    (0001-01-01T00:00:00Z), not null/empty — so a naive truthiness check
+    on deleted_at treats every tunnel as deleted. Only a real, later
+    timestamp means it's actually gone."""
+    if not deleted_at:
+        return False
+    return not deleted_at.startswith("0001-01-01")
 
 
 def _local_config_files():

@@ -42,6 +42,35 @@ This opens the interactive menu:
   Cloudflare account, or route another subdomain to an existing tunnel.
 - **Manage start commands** — turn any saved tunnel into a one-word
   command (see below).
+- **Add an existing tunnel manually** — if you already created/run a
+  tunnel yourself (see "Existing tunnels" below), tell psbdx how it's
+  started and it'll track it from then on, no auto-detection needed.
+
+### Existing tunnels you created outside psbdx
+
+If you already made tunnels by hand with `cloudflared`, psbdx tries to
+auto-detect them from your Cloudflare account (main menu → "Import").
+Auto-detection depends on `cloudflared tunnel list -o json` returning
+clean, parseable output for your account, which isn't always reliable —
+different cloudflared versions, tokens vs. cert-based logins, and
+multi-account setups can all cause it to find nothing even though your
+tunnel is real and working.
+
+If that happens, don't fight it — use **"Add an existing tunnel
+manually"** from the main menu instead. You'll be asked for:
+
+- a friendly name and the local port it forwards to
+- its hostname, if any
+- how you normally start it:
+  - **named tunnel** — if you run it with `cloudflared tunnel run <name>`
+    (give the tunnel name, and optionally its ID and config.yml path)
+  - **token** — if it's a tunnel created in the Zero Trust dashboard and
+    started with `cloudflared tunnel run --token <token>` (paste the
+    token; it's stored in plain text at `~/.psbdx-data/data.json`, the
+    same way it would be in a shell script, so treat it like a password)
+
+Once added, it behaves exactly like any tunnel created through psbdx —
+start it, delete it, or give it a one-word start command.
 
 ### One-word start commands
 

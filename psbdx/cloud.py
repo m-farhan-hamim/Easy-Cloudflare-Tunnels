@@ -32,6 +32,7 @@ def main_menu():
             ("manage_tunnels", "Manage existing tunnels"),
             ("manage_domains", "Manage domains"),
             ("commands", "Manage start commands"),
+            ("manual_add", "Add an existing tunnel manually"),
         ]
         discovered = _discover() if cf.is_logged_in() else []
         if discovered:
@@ -48,6 +49,8 @@ def main_menu():
             manage_domains_flow()
         elif choice == "commands":
             manage_commands_flow()
+        elif choice == "manual_add":
+            add_manual_tunnel_flow()
         elif choice == "import":
             import_tunnels_flow(discovered)
         elif choice == "exit":
@@ -136,6 +139,58 @@ def import_tunnels_flow(discovered=None):
 
         if confirm("Set up a one-word start command for it?", default=False):
             create_start_command(record["id"])
+
+
+def add_manual_tunnel_flow():
+    """For when auto-detection can't find a tunnel you already run
+    yourself — e.g. a token-based tunnel created in the Zero Trust
+    dashboard, or one whose config psbdx's scan didn't pick up. You just
+    tell psbdx how it's normally started."""
+    title("Add an existing tunnel manually")
+    info("Use this for a tunnel you already created/run outside psbdx.")
+
+    name = ask("Friendly name for this tunnel")
+    port = ask_port("Local port it forwards to")
+    hostname = ask("Hostname it's reachable at (e.g. api.example.com), or leave blank",
+                    required=False) or None
+
+    run_mode = ask_choice("How do you normally start it?", [
+        ("named", "cloudflared tunnel run <name>  (a named/local tunnel)"),
+        ("token", "cloudflared tunnel run --token <token>  (from the Zero Trust dashboard)"),
+    ])
+
+    subdomain = domain = None
+    if hostname and "." in hostname:
+        subdomain, domain = hostname.split(".", 1)
+
+    kwargs = dict(mode="domain", port=port, name=name, hostname=hostname,
+                  subdomain=subdomain, domain=domain)
+
+    if run_mode == "named":
+        cf_name = ask("Tunnel name (exactly as used in 'cloudflared tunnel run <name>')")
+        cf_id = ask("Tunnel ID/UUID, if you know it (optional)", required=False) or None
+        config_path = ask(
+            "Path to its config.yml, if it uses one (optional — leave blank to have "
+            "psbdx generate one, or if it's run purely with --token)",
+            required=False,
+        ) or None
+        if not config_path and cf_id and hostname:
+            config_path = cf.write_config(cf_name, cf_id, hostname, port)
+            ok(f"Generated a config at {config_path}")
+        kwargs.update(cf_name=cf_name, cf_id=cf_id, config_path=config_path)
+    else:
+        token = ask("Paste the tunnel token (from the Zero Trust dashboard "
+                     "'install and run a connector' step)")
+        warn("This token is stored in plain text at ~/.psbdx-data/data.json, "
+             "same as it would be in any shell script — treat it like a password.")
+        kwargs["token"] = token
+
+    record = storage.new_tunnel_record(**kwargs)
+    storage.add_tunnel(record)
+    ok(f"Saved '{name}'.")
+
+    if confirm("Set up a one-word start command for it?", default=True):
+        create_start_command(record["id"])
 
 
 # --------------------------------------------------------------------------
@@ -233,14 +288,25 @@ def run_tunnel(record):
         except KeyboardInterrupt:
             print()
         ok("Tunnel stopped.")
-    else:
-        info(f"Starting tunnel '{record['cf_name']}' for https://{record['hostname']} ...")
+    elif record.get("token"):
+        label = record.get("hostname") or record["name"]
+        info(f"Starting tunnel '{record['name']}' ({label}) via its run token...")
         info("Press Ctrl+C to stop.")
         try:
-            subprocess.run(
-                ["cloudflared", "tunnel", "--config", record["config_path"], "run",
-                 record["cf_name"]]
-            )
+            subprocess.run(["cloudflared", "tunnel", "run", "--token", record["token"]])
+        except KeyboardInterrupt:
+            print()
+        ok("Tunnel stopped.")
+    else:
+        target = f"https://{record['hostname']}" if record.get("hostname") else "(no hostname set)"
+        info(f"Starting tunnel '{record['cf_name']}' for {target} ...")
+        info("Press Ctrl+C to stop.")
+        cmd = ["cloudflared"]
+        if record.get("config_path"):
+            cmd += ["--config", record["config_path"]]
+        cmd += ["tunnel", "run", record["cf_name"]]
+        try:
+            subprocess.run(cmd)
         except KeyboardInterrupt:
             print()
         ok("Tunnel stopped.")
@@ -271,10 +337,13 @@ def _print_tunnels(tunnels):
     for i, t in enumerate(tunnels, start=1):
         if t["mode"] == "quick":
             where = f"quick tunnel → localhost:{t['port']}"
-        else:
+        elif t.get("hostname"):
             where = f"https://{t['hostname']} → localhost:{t['port']}"
+        else:
+            where = f"(no hostname set) → localhost:{t['port']}"
+        via = f" {C.DIM}[token]{C.RESET}" if t.get("token") else ""
         cmd = f", start command: {C.CYAN}{t['start_command']}{C.RESET}" if t.get("start_command") else ""
-        print(f"  {C.CYAN}{i}{C.RESET}. {C.BOLD}{t['name']}{C.RESET} — {where}{cmd}")
+        print(f"  {C.CYAN}{i}{C.RESET}. {C.BOLD}{t['name']}{C.RESET} — {where}{via}{cmd}")
 
 
 def manage_tunnels_flow():
@@ -320,14 +389,15 @@ def manage_tunnels_flow():
 def _delete_tunnel(record):
     if not confirm(f"Really delete '{record['name']}'? This can't be undone.", default=False):
         return
-    if record["mode"] == "domain":
+    if record["mode"] == "domain" and record.get("cf_name") and confirm(
+            "Also delete the tunnel itself from your Cloudflare account?", default=False):
         cf.delete_tunnel(record["cf_name"])
         if record.get("config_path") and os.path.exists(record["config_path"]):
             os.remove(record["config_path"])
     if record.get("start_command"):
         _remove_command_file(record["start_command"])
     storage.delete_tunnel(record["id"])
-    ok("Deleted.")
+    ok("Removed from psbdx.")
 
 
 # --------------------------------------------------------------------------

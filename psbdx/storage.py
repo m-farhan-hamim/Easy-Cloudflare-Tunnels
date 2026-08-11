@@ -40,7 +40,8 @@ def _save(data):
 
 
 def new_tunnel_record(mode, port, name=None, subdomain=None, domain=None,
-                       cf_name=None, cf_id=None, hostname=None, config_path=None):
+                       cf_name=None, cf_id=None, hostname=None, config_path=None,
+                       token=None):
     return {
         "id": uuid.uuid4().hex[:8],
         "mode": mode,                # "quick" or "domain"
@@ -52,6 +53,9 @@ def new_tunnel_record(mode, port, name=None, subdomain=None, domain=None,
         "cf_id": cf_id,              # cloudflared tunnel UUID (domain mode)
         "hostname": hostname,        # full hostname (domain mode)
         "config_path": config_path,  # path to the cloudflared config.yml
+        "token": token,              # tunnel run token, for remotely-managed
+                                      # (dashboard-created) tunnels instead of
+                                      # a named tunnel + local config.yml
         "start_command": None,       # custom command name, if any
     }
 
