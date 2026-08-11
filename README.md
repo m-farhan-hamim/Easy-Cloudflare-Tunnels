@@ -1,4 +1,4 @@
-# Easy Cloudflare Tunnels (psbdx)
+# Easy Cloudflare Tunnels (by PSBDx)
 
 A simple, guided CLI for managing [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
 — built for **Termux** (Android) and regular **Linux** terminals.
