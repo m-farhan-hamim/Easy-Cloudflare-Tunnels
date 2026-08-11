@@ -441,7 +441,8 @@ def create_start_command(tunnel_id):
 
     wrapper_path = os.path.join(bin_dir(), name)
     main_py = os.path.join(utils.install_dir(), "psbdx", "main.py")
-    script = f"#!/usr/bin/env bash\nexec python3 \"{main_py}\" start \"{record['id']}\"\n"
+    bash_path = which("bash") or which("sh") or "/bin/sh"
+    script = f"#!{bash_path}\nexec python3 \"{main_py}\" start \"{record['id']}\"\n"
     with open(wrapper_path, "w") as f:
         f.write(script)
     st = os.stat(wrapper_path)

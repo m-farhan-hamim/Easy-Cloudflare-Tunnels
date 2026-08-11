@@ -5,6 +5,9 @@
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/m-farhan-hamim/Easy-Cloudflare-Tunnels/main/install.sh | bash
 #
+# Note: always run this via `| bash` (as above) or `bash install.sh`,
+# not `./install.sh` directly — Termux has no /usr/bin/env, so the
+# shebang above only resolves correctly on regular Linux.
 set -euo pipefail
 
 REPO_URL="https://github.com/m-farhan-hamim/Easy-Cloudflare-Tunnels.git"
@@ -100,24 +103,40 @@ fi
 
 step "Setting up the 'psbdx' command"
 mkdir -p "$BIN_DIR"
+BASH_PATH="$(command -v bash || command -v sh)"
 cat > "$BIN_DIR/psbdx" <<EOF
-#!/usr/bin/env bash
+#!$BASH_PATH
 exec python3 "$INSTALL_DIR/psbdx/main.py" "\$@"
 EOF
 chmod +x "$BIN_DIR/psbdx"
 c_green "Installed launcher at $BIN_DIR/psbdx"
 
-# Make sure BIN_DIR is on PATH for future shells (Termux's $PREFIX/bin
-# already is; ~/.local/bin on plain Linux often needs adding).
-if ! is_termux; then
-  for RC in "$HOME/.bashrc" "$HOME/.zshrc"; do
-    [ -f "$RC" ] || continue
-    if ! grep -q '.local/bin' "$RC" 2>/dev/null; then
-      echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$RC"
-    fi
-  done
-  export PATH="$HOME/.local/bin:$PATH"
-fi
+# Make sure BIN_DIR stays on PATH no matter what shell (or shell
+# framework/theme) the user opens next. This matters even on Termux:
+# $PREFIX/bin is on PATH by default, but some zsh setups (oh-my-zsh,
+# prezto, custom dotfiles with $ZDOTDIR, etc.) rebuild PATH from
+# scratch in their rc files, which can drop it. We append a PATH line
+# to every rc file we can find, as a safety net — harmless no-op if
+# BIN_DIR was already going to be on PATH anyway.
+step "Making sure 'psbdx' stays on PATH for your shell"
+ZSHRC="${ZDOTDIR:-$HOME}/.zshrc"
+RC_CANDIDATES=("$HOME/.bashrc" "$ZSHRC")
+# Only bother creating rc files for shells that are actually installed.
+command -v zsh  >/dev/null 2>&1 && [ ! -f "$ZSHRC" ]        && touch "$ZSHRC"
+command -v bash >/dev/null 2>&1 && [ ! -f "$HOME/.bashrc" ] && touch "$HOME/.bashrc"
+
+for RC in "${RC_CANDIDATES[@]}"; do
+  [ -f "$RC" ] || continue
+  if ! grep -qF "$BIN_DIR" "$RC" 2>/dev/null; then
+    {
+      echo ''
+      echo '# Added by psbdx (Easy Cloudflare Tunnels) installer'
+      echo "export PATH=\"$BIN_DIR:\$PATH\""
+    } >> "$RC"
+    c_green "Added $BIN_DIR to PATH in $RC"
+  fi
+done
+export PATH="$BIN_DIR:$PATH"
 
 # Termux doesn't have a shared plugin help registry, so the friendliest
 # thing we can do is remind the user on every new session via the MOTD.
