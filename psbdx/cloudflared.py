@@ -16,6 +16,11 @@ from .utils import C, ok, warn, err, info, run, which, is_termux
 
 RELEASE_BASE = "https://github.com/cloudflare/cloudflared/releases/latest/download"
 
+# Set by list_account_tunnels() whenever it comes back empty because of a
+# real problem (auth, a failed command, unparsable output) rather than
+# there genuinely being zero tunnels on the account.
+LAST_LIST_ERROR = None
+
 
 def is_installed():
     return which("cloudflared") is not None
@@ -161,16 +166,38 @@ def write_config(cf_name, tunnel_id, hostname, port):
 # --------------------------------------------------------------------------
 def list_account_tunnels():
     """All named tunnels on the logged-in Cloudflare account, deleted ones
-    excluded. Returns [{id, name, created_at}, ...]."""
+    excluded. Returns [{id, name, created_at}, ...].
+
+    On any failure this returns [] and records the reason in
+    LAST_LIST_ERROR so callers can surface it instead of silently
+    looking like "no tunnels found"."""
+    global LAST_LIST_ERROR
+    LAST_LIST_ERROR = None
+
     if not is_logged_in():
+        LAST_LIST_ERROR = "not logged in (no ~/.cloudflared/cert.pem)"
         return []
+
     proc = run(["cloudflared", "tunnel", "list", "-o", "json"])
+    raw = (proc.stdout or "")
     if proc.returncode != 0:
+        LAST_LIST_ERROR = (proc.stderr or raw or "cloudflared tunnel list exited with an error").strip()
         return []
+
+    # cloudflared sometimes mixes a warning/nag line in with the JSON on
+    # stdout depending on version, so pull out just the [...] array
+    # instead of assuming raw.strip() is valid JSON on its own.
+    start, end = raw.find("["), raw.rfind("]")
+    if start == -1 or end == -1 or end < start:
+        LAST_LIST_ERROR = f"unexpected output from 'cloudflared tunnel list -o json': {raw.strip()[:300] or '(empty)'}"
+        return []
+
     try:
-        items = json.loads(proc.stdout)
-    except json.JSONDecodeError:
+        items = json.loads(raw[start:end + 1])
+    except json.JSONDecodeError as e:
+        LAST_LIST_ERROR = f"couldn't parse cloudflared's JSON output ({e})"
         return []
+
     out = []
     for item in items:
         if item.get("deleted_at"):

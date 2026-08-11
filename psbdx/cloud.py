@@ -65,10 +65,21 @@ def _discover():
     return cf.discover_untracked(known_ids)
 
 
+def _discover_verbose():
+    """Like _discover(), but prints a diagnostic if the account-tunnel
+    lookup itself failed (vs. genuinely having nothing to import)."""
+    discovered = _discover()
+    if not discovered and cf.LAST_LIST_ERROR:
+        warn("Couldn't check your Cloudflare account for existing tunnels:")
+        print(f"  {C.DIM}{cf.LAST_LIST_ERROR}{C.RESET}")
+        info("Try running 'cloudflared tunnel list -o json' by hand to see what's going on.")
+    return discovered
+
+
 def _notify_untracked_once():
     if not cf.is_logged_in():
         return
-    discovered = _discover()
+    discovered = _discover_verbose()
     if discovered:
         warn(f"Found {len(discovered)} tunnel(s) in your Cloudflare account that "
              f"weren't created through psbdx. Import them from the main menu "
@@ -77,7 +88,7 @@ def _notify_untracked_once():
 
 def import_tunnels_flow(discovered=None):
     title("Import existing tunnels")
-    discovered = discovered if discovered is not None else _discover()
+    discovered = discovered if discovered is not None else _discover_verbose()
     if not discovered:
         info("Nothing new to import — every tunnel on your account is already tracked.")
         return
@@ -275,7 +286,7 @@ def manage_tunnels_flow():
         _print_tunnels(tunnels)
 
     if cf.is_logged_in():
-        discovered = _discover()
+        discovered = _discover_verbose()
         if discovered:
             print()
             warn(f"{len(discovered)} more tunnel(s) exist in your Cloudflare "
@@ -335,7 +346,7 @@ def manage_domains_flow():
         for t in tunnels:
             print(f"  • https://{t['hostname']}  (tunnel: {t['cf_name']}, port {t['port']})")
 
-    discovered = _discover() if logged_in else []
+    discovered = _discover_verbose() if logged_in else []
     if discovered:
         print(f"\n{C.YELLOW}Also on your account, not yet imported:{C.RESET}")
         for item in discovered:
