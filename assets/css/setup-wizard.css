@@ -1,0 +1,240 @@
+/**
+ * PSBDx Smart Report Management — Setup Wizard
+ *
+ * @package PSBDx_Smart_Report_Management
+ * @since   1.4.5
+ */
+
+.psrm-wizard-wrap {
+	max-width: 640px;
+	margin:    40px auto;
+	padding:   0 16px;
+}
+
+.psrm-wizard-card {
+	background:    #fff;
+	border:        1px solid #dcdcde;
+	border-radius: 12px;
+	box-shadow:    0 2px 8px rgba(0,0,0,.04);
+	overflow:      hidden;
+}
+
+.psrm-wizard-progress {
+	height:     6px;
+	background: #f0f0f1;
+}
+
+.psrm-wizard-progress-fill {
+	display:    block;
+	height:     100%;
+	width:      20%;
+	background: linear-gradient(90deg, #2271b1, #135e96);
+	transition: width .25s ease;
+}
+
+.psrm-wizard-step {
+	display: none;
+	padding: 40px 36px 8px;
+	text-align: center;
+}
+
+.psrm-wizard-step-active {
+	display: block;
+}
+
+.psrm-wizard-step h1 {
+	font-size:   22px;
+	margin:      12px 0 8px;
+}
+
+.psrm-wizard-step h2 {
+	font-size:   18px;
+	margin:      0 0 6px;
+}
+
+.psrm-wizard-step p {
+	color:       #50575e;
+	font-size:   14px;
+	line-height: 1.6;
+}
+
+.psrm-wizard-step[data-step="2"],
+.psrm-wizard-step[data-step="3"],
+.psrm-wizard-step[data-step="4"] {
+	text-align: left;
+}
+
+.psrm-wizard-step-desc {
+	margin-bottom: 18px;
+}
+
+.psrm-wizard-icon {
+	display:        inline-flex;
+	align-items:    center;
+	justify-content: center;
+	width:          64px;
+	height:         64px;
+	border-radius:  50%;
+	background:     #f0f6fc;
+	color:          #2271b1;
+	margin-bottom:  4px;
+}
+
+.psrm-wizard-icon-done {
+	background: #edfaef;
+	color:      #1a7f37;
+}
+
+.psrm-wizard-field {
+	display:       block;
+	margin:        0 0 16px;
+}
+
+.psrm-wizard-field span {
+	display:      block;
+	font-weight:  600;
+	font-size:    13px;
+	margin-bottom: 6px;
+}
+
+.psrm-wizard-field input {
+	width:         100%;
+	max-width:     360px;
+	padding:       8px 10px;
+	border:        1px solid #8c8f94;
+	border-radius: 6px;
+	font-size:     14px;
+}
+
+.psrm-wizard-checkbox {
+	display:      flex;
+	align-items:  flex-start;
+	gap:          10px;
+	font-size:    14px;
+	background:   #f6f7f7;
+	border:       1px solid #dcdcde;
+	border-radius: 8px;
+	padding:      14px 16px;
+}
+
+.psrm-wizard-checkbox input {
+	margin-top: 3px;
+}
+
+.psrm-wizard-email-list {
+	display:       flex;
+	flex-direction: column;
+	gap:           8px;
+	margin:        18px 0;
+}
+
+.psrm-wizard-email-row {
+	padding: 10px 14px;
+}
+
+.psrm-wizard-email-row strong {
+	display: block;
+	font-size: 13px;
+}
+
+.psrm-wizard-email-desc {
+	display:   block;
+	font-size: 12px;
+	color:     #787c82;
+	margin-top: 2px;
+}
+
+.psrm-wizard-test-email {
+	display:     flex;
+	align-items: center;
+	gap:         12px;
+	margin-top:  8px;
+}
+
+#psrm-wizard-test-email-result {
+	font-size: 13px;
+}
+
+#psrm-wizard-test-email-result.psrm-test-ok {
+	color: #1a7f37;
+}
+
+#psrm-wizard-test-email-result.psrm-test-error {
+	color: #d63638;
+}
+
+.psrm-wizard-credit {
+	margin-top:  22px;
+	padding-top: 18px;
+	border-top:  1px solid #f0f0f1;
+	font-size:   13px;
+	color:       #50575e;
+}
+
+.psrm-wizard-credit-title {
+	display:   block;
+	font-size: 12px;
+	color:     #8c8f94;
+}
+
+.psrm-wizard-nav {
+	display:       flex;
+	align-items:   center;
+	gap:           10px;
+	padding:       20px 36px 28px;
+	border-top:    1px solid #f0f0f1;
+	margin-top:    24px;
+}
+
+.psrm-wizard-nav-spacer {
+	flex: 1 1 auto;
+}
+
+.psrm-wizard-skip {
+	background: none;
+	border:     none;
+	color:      #787c82;
+	font-size:  13px;
+	cursor:     pointer;
+	padding:    6px 4px;
+	text-decoration: underline;
+}
+
+.psrm-wizard-skip:hover {
+	color: #d63638;
+}
+
+/* ─── Mobile ──────────────────────────────────────────────────────────────── */
+@media screen and (max-width: 600px) {
+	.psrm-wizard-wrap {
+		margin: 16px auto;
+		padding: 0 8px;
+	}
+	.psrm-wizard-step {
+		padding: 28px 20px 8px;
+	}
+	.psrm-wizard-nav {
+		flex-wrap: wrap;
+		padding:   16px 20px 22px;
+	}
+	.psrm-wizard-nav-spacer {
+		display: none;
+	}
+	.psrm-wizard-skip {
+		order: 3;
+		width: 100%;
+		text-align: center;
+		margin-top: 8px;
+	}
+	.psrm-wizard-back,
+	.psrm-wizard-next,
+	.psrm-wizard-finish {
+		flex: 1 1 auto;
+	}
+	.psrm-wizard-field input {
+		max-width: 100%;
+	}
+	.psrm-wizard-test-email {
+		flex-wrap: wrap;
+	}
+}

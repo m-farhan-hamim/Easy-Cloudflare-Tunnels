@@ -1,0 +1,1155 @@
+/**
+ * PSBDx Smart Report Management — Admin Styles
+ *
+ * @package PSBDx_Smart_Report_Management
+ * @since   1.0.0
+ */
+
+/* ── Meta box sections ────────────────────────────────────────────────────── */
+.psbdx-meta-sections {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.psbdx-meta-section {
+	background: #fff;
+	border: 1px solid #e0e0e0;
+	border-radius: 6px;
+	overflow: hidden;
+	box-shadow: 0 1px 2px rgba( 0, 0, 0, 0.05 );
+}
+
+.psbdx-meta-section-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 14px;
+	background: #f8f9fa;
+	border-bottom: 1px solid #e0e0e0;
+	font-size: 13px;
+	color: #1e293b;
+}
+
+.psbdx-meta-section-header .dashicons {
+	color: #6366f1;
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+.psbdx-meta-section-body {
+	padding: 12px 14px 4px;
+}
+
+.psbdx-meta-section-body p {
+	margin-top: 0;
+}
+
+.psbdx-meta-section-body .large-text {
+	max-width: 500px;
+	border-radius: 5px;
+}
+
+.psbdx-meta-section-body .large-text:focus {
+	border-color: #6366f1;
+	box-shadow: 0 0 0 1px #6366f1;
+	outline: none;
+}
+
+.psbdx-meta-hint {
+	font-size: 12px;
+	color: #94a3b8;
+	margin-bottom: 6px !important;
+}
+
+.psbdx-inline-field {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.psbdx-inline-field .small-text {
+	border-radius: 5px;
+}
+
+/* ── Shortcode copy box ───────────────────────────────────────────────────── */
+.psbdx-copy-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.psbdx-copy-row code {
+	flex: 1;
+	min-width: 0;
+	padding: 6px 10px;
+	background: #f1f5f9;
+	border: 1px solid #e2e8f0;
+	border-radius: 4px;
+	font-size: 12px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.psbdx-copy-btn {
+	flex-shrink: 0;
+}
+
+/* ── Report status meta box ───────────────────────────────────────────────── */
+.psbdx-status-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.psbdx-current-status-badge {
+	display: inline-block;
+	padding: 5px 12px;
+	border-radius: 99px;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.psbdx-status-update-label {
+	font-size: 12px;
+	color: #64748b;
+}
+
+/* ── Report log details ───────────────────────────────────────────────────── */
+.psbdx-log-detail-wrap {
+	font-size: 13px;
+}
+
+.psbdx-detail-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin-bottom: 6px;
+}
+
+.psbdx-detail-row .dashicons {
+	font-size: 14px;
+	vertical-align: middle;
+}
+
+.psbdx-log-content {
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 6px;
+	padding: 12px 14px;
+	font-size: 13px;
+	color: #374151;
+	line-height: 1.8;
+	margin-top: 10px;
+}
+
+/* ── List table column helpers ────────────────────────────────────────────── */
+.psbdx-admin-reporter {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+}
+
+.psbdx-admin-avatar {
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.psbdx-admin-muted {
+	color: #94a3b8;
+}
+
+/* ── Badges (shared by columns and log details) ───────────────────────────── */
+.psbdx-badge {
+	display: inline-block;
+	padding: 3px 9px;
+	border-radius: 99px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.4px;
+	white-space: nowrap;
+}
+
+.psbdx-badge-grey   { background: #e2e8f0; color: #475569; }
+.psbdx-badge-green  { background: #dcfce7; color: #166534; }
+.psbdx-badge-red    { background: #fee2e2; color: #991b1b; }
+.psbdx-badge-orange { background: #ffedd5; color: #9a3412; }
+.psbdx-badge-purple { background: #f3e8ff; color: #6b21a8; }
+
+.psbdx-badge-ticket {
+	background:     #eef2ff;
+	color:          #4338ca;
+	text-transform: none;
+	letter-spacing: 0;
+	display:        inline-flex;
+	align-items:    center;
+	gap:            4px;
+	font-size:      12px;
+}
+
+.psbdx-badge-ticket .dashicons {
+	width:      13px;
+	height:     13px;
+	font-size:  13px;
+	line-height: 13px;
+}
+
+/* ── Dashboard widget ─────────────────────────────────────────────────────── */
+.psbdx-dw {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.psbdx-dw-total-row {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	margin-bottom: 14px;
+}
+
+.psbdx-dw-total {
+	font-size: 34px;
+	font-weight: 800;
+	color: #1e293b;
+	line-height: 1;
+}
+
+.psbdx-dw-total-label {
+	font-size: 13px;
+	color: #94a3b8;
+}
+
+.psbdx-dw-grid {
+	display: grid;
+	grid-template-columns: repeat( auto-fit, minmax( 90px, 1fr ) );
+	gap: 8px;
+	margin-bottom: 16px;
+}
+
+.psbdx-dw-card {
+	border-radius: 8px;
+	padding: 10px 12px;
+}
+
+.psbdx-dw-card-count {
+	font-size: 22px;
+	font-weight: 700;
+}
+
+.psbdx-dw-card-label {
+	font-size: 11px;
+	font-weight: 600;
+	margin-top: 2px;
+	opacity: 0.8;
+}
+
+.psbdx-dw-section-heading {
+	font-size: 11px;
+	font-weight: 700;
+	color: #94a3b8;
+	text-transform: uppercase;
+	letter-spacing: 0.6px;
+	margin: 14px 0 8px;
+}
+
+.psbdx-dw-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.psbdx-dw-list-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 7px 0;
+	border-bottom: 1px solid #f1f5f9;
+	font-size: 13px;
+}
+
+.psbdx-dw-list-item:last-child {
+	border-bottom: none;
+}
+
+.psbdx-dw-list-title {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: #334155;
+	text-decoration: none;
+}
+
+.psbdx-dw-list-title:hover {
+	color: #6366f1;
+}
+
+.psbdx-dw-badge {
+	flex-shrink: 0;
+	padding: 2px 8px;
+	border-radius: 99px;
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.psbdx-dw-date {
+	flex-shrink: 0;
+	font-size: 11px;
+	color: #94a3b8;
+}
+
+.psbdx-dw-footer {
+	margin-top: 12px;
+	text-align: right;
+}
+
+/* ── Captcha settings tab ─────────────────────────────────────────────────── */
+.psbdx-captcha-card {
+	background: #fff;
+	border: 1px solid #e0e0e0;
+	border-left: 4px solid #e0e0e0;
+	border-radius: 6px;
+	margin-bottom: 16px;
+	overflow: hidden;
+	box-shadow: 0 1px 3px rgba(0,0,0,.05);
+	transition: border-left-color .2s;
+}
+
+.psbdx-captcha-card--active {
+	box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.psbdx-captcha-card-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 16px;
+	background: #f8f9fa;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.psbdx-captcha-card-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+}
+
+.psbdx-captcha-card-controls {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+}
+
+.psbdx-captcha-doc-link {
+	font-size: 12px;
+	display: flex;
+	align-items: center;
+	gap: 3px;
+	text-decoration: none;
+}
+
+.psbdx-captcha-doc-link .dashicons {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+}
+
+.psbdx-captcha-card-body {
+	padding: 16px;
+}
+
+.psbdx-captcha-fields {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-bottom: 14px;
+}
+
+.psbdx-captcha-field-row {
+	display: grid;
+	grid-template-columns: 140px 1fr;
+	align-items: center;
+	gap: 10px;
+}
+
+.psbdx-captcha-field-row label {
+	font-size: 13px;
+}
+
+.psbdx-captcha-secret-wrap {
+	display: flex;
+	gap: 6px;
+}
+
+.psbdx-captcha-secret-wrap input {
+	flex: 1;
+}
+
+.psbdx-captcha-test-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.psbdx-captcha-test-result {
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.psbdx-captcha-test-pending { color: #6b7280; }
+.psbdx-captcha-test-ok      { color: #16a34a; }
+.psbdx-captcha-test-fail    { color: #dc2626; }
+
+/* Toggle switch */
+.psbdx-toggle {
+	position: relative;
+	display: inline-block;
+	width: 42px;
+	height: 24px;
+	cursor: pointer;
+}
+
+.psbdx-toggle input {
+	opacity: 0;
+	width: 0;
+	height: 0;
+	position: absolute;
+}
+
+.psbdx-toggle-slider {
+	position: absolute;
+	inset: 0;
+	background: #cbd5e1;
+	border-radius: 999px;
+	transition: background .2s;
+}
+
+.psbdx-toggle-slider::before {
+	content: '';
+	position: absolute;
+	width: 18px;
+	height: 18px;
+	left: 3px;
+	top: 3px;
+	background: #fff;
+	border-radius: 50%;
+	transition: transform .2s;
+	box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+
+.psbdx-toggle input:checked + .psbdx-toggle-slider {
+	background: #6366f1;
+}
+
+.psbdx-toggle input:checked + .psbdx-toggle-slider::before {
+	transform: translateX(18px);
+}
+
+/* ── Inline "i" info tooltip trigger (native title attribute) ────────────── */
+.psbdx-info-icon {
+	cursor: help;
+	color: #6366f1;
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+	vertical-align: text-top;
+	margin-left: 2px;
+}
+
+.psbdx-info-icon:hover,
+.psbdx-info-icon:focus {
+	color: #4338ca;
+	outline: none;
+}
+
+/* ── AI settings tab ──────────────────────────────────────────────────────── */
+#psbdx-ai-settings-form fieldset,
+.psbdx-srm-tools fieldset {
+	border: 0;
+	margin: 0;
+	padding: 0;
+}
+
+#psbdx-ai-settings-form fieldset[disabled],
+.psbdx-srm-tools fieldset[disabled] {
+	opacity: .55;
+}
+
+/* Inline warning notice in meta box */
+.psbdx-notice-inline {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+	padding: 8px 10px;
+	background: #fefce8;
+	border: 1px solid #fde68a;
+	border-radius: 4px;
+	color: #92400e;
+	margin-bottom: 8px;
+}
+
+.psbdx-notice-inline .dashicons {
+	color: #d97706;
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+/* =============================================================================
+   v1.3.1 — Integration rows, missing badge, admin bar badge
+   ============================================================================= */
+
+/* Integration rows in form builder settings tab */
+.psrm-integration-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding: 6px 0;
+}
+
+.psrm-integration-row label {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	cursor: pointer;
+}
+
+.psrm-integration-unavailable label,
+.psrm-label-muted {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.psrm-integration-unavailable input[type="checkbox"] {
+	cursor: not-allowed;
+}
+
+.psrm-integration-missing-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	background: #fef3c7;
+	color: #92400e;
+	border: 1px solid #fcd34d;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 600;
+	padding: 2px 8px;
+	white-space: nowrap;
+}
+
+.psrm-integration-missing-badge .dashicons {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+}
+
+/* Admin bar reports badge */
+#wpadminbar #wp-admin-bar-psrm-unsolved > .ab-item .psrm-bar-badge {
+	display: inline-block;
+	background: #b91c1c;
+	color: #fff;
+	border-radius: 10px;
+	font-size: 10px;
+	line-height: 1;
+	padding: 2px 6px;
+	margin-left: 4px;
+	vertical-align: middle;
+}
+
+/* ── Support page layout (Contact Support tab) ────────────────────────────── */
+.psbdx-support-layout {
+	display: grid;
+	grid-template-columns: 1fr 340px;
+	gap: 24px;
+	max-width: 1000px;
+	margin-top: 20px;
+	align-items: start;
+}
+
+/* ── FAQ tab (admin-managed question/answer rows) ─────────────────────────── */
+.psbdx-faq-row {
+	padding-bottom: 4px;
+}
+
+/* ── Ticket header strip (report edit screen, under the title) ───────────── */
+.psbdx-ticket-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	padding: 10px 14px;
+	margin: 12px 0 0;
+}
+
+.psbdx-ticket-header-meta {
+	margin-left: auto;
+	color: #64748b;
+	font-size: 12px;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	flex-wrap: wrap;
+}
+
+.psbdx-ticket-header-meta .dashicons {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+}
+
+/* ── Response view (redesigned "Report Details" box) ──────────────────────── */
+.psbdx-response-card {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.psbdx-response-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.psbdx-response-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 999px;
+	padding: 4px 12px;
+	font-size: 12px;
+}
+
+.psbdx-response-chip .dashicons {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+	color: #64748b;
+}
+
+.psbdx-response-chip a {
+	text-decoration: none;
+}
+
+.psbdx-response-message {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	padding: 16px 18px;
+	line-height: 1.7;
+	font-size: 14px;
+	color: #1e293b;
+	overflow-wrap: anywhere;
+}
+
+.psbdx-response-message hr {
+	margin: 12px 0;
+	border: none;
+	border-top: 1px solid #e2e8f0;
+}
+
+.psbdx-response-message strong {
+	color: #0f172a;
+}
+
+/* ── AI summary panel (Summarize button + result) ─────────────────────────── */
+.psbdx-ai-summary-panel {
+	background: #f5f3ff;
+	border: 1px solid #ddd6fe;
+	border-radius: 8px;
+	padding: 14px 16px;
+}
+
+.psbdx-ai-summary-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.psbdx-ai-summary-title {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-weight: 600;
+	font-size: 13px;
+	color: #5b21b6;
+}
+
+.psbdx-ai-summary-body {
+	margin-top: 10px;
+	font-size: 13px;
+	line-height: 1.6;
+	color: #1e293b;
+	overflow-wrap: anywhere;
+}
+
+.psbdx-ai-summary-body.psbdx-is-empty {
+	color: #7c6fa8;
+	font-style: italic;
+}
+
+.psbdx-ai-summary-body.psbdx-is-error {
+	color: #991b1b;
+}
+
+/* ── Conversation / reply thread meta box ─────────────────────────────────── */
+.psbdx-thread-admin-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.psbdx-admin-thread-list {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.psbdx-ai-reply-toggle-bar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 12px;
+	border: 1px solid #bbf7d0;
+	background: #f0fdf4;
+	border-radius: 6px;
+	font-size: 13px;
+	color: #166534;
+}
+
+.psbdx-ai-reply-toggle-bar.is-off {
+	border-color: #e2e8f0;
+	background: #f8fafc;
+	color: #64748b;
+}
+
+.psbdx-ai-reply-toggle-text {
+	flex: 1;
+}
+
+.psbdx-ai-reply-toggle-btn {
+	white-space: nowrap;
+}
+
+.psbdx-thread-empty {
+	color: #64748b;
+	font-size: 13px;
+	margin: 0;
+}
+
+.psbdx-thread-msg {
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	background: #fff;
+	padding: 10px 14px;
+	max-width: 80%;
+}
+
+.psbdx-thread-msg-user {
+	background: #eef2ff;
+	border-color: #c7d2fe;
+	border-bottom-left-radius: 4px;
+}
+
+.psbdx-thread-msg-admin {
+	margin-left: auto;
+	background: #f8fafc;
+	border-bottom-right-radius: 4px;
+}
+
+.psbdx-thread-msg-ai {
+	margin-left: auto;
+	background: #f0fdf4;
+	border-color: #bbf7d0;
+	border-bottom-right-radius: 4px;
+}
+
+.psbdx-thread-msg-head {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.3px;
+	color: #64748b;
+	margin-bottom: 5px;
+}
+
+.psbdx-thread-msg-avatar {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: #e2e8f0;
+	color: #475569;
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 0;
+	text-transform: none;
+}
+
+.psbdx-thread-msg-author {
+	flex: 1;
+}
+
+.psbdx-thread-msg-body {
+	font-size: 13px;
+	line-height: 1.6;
+	color: #1e293b;
+	overflow-wrap: anywhere;
+}
+
+.psbdx-thread-msg-body p:first-child { margin-top: 0; }
+.psbdx-thread-msg-body p:last-child  { margin-bottom: 0; }
+
+.psbdx-thread-msg-attachment {
+	margin-top: 6px;
+}
+
+.psbdx-thread-msg-attachment-img {
+	max-width:     220px;
+	max-height:    220px;
+	border-radius: 6px;
+	display:       block;
+	border:        1px solid #dcdcde;
+}
+
+.psbdx-thread-msg-attachment-file {
+	display:       inline-flex;
+	align-items:   center;
+	gap:           6px;
+	font-size:     12px;
+	padding:       5px 9px;
+	border:        1px solid #dcdcde;
+	border-radius: 6px;
+	text-decoration: none;
+}
+
+.psbdx-thread-msg-attachment-deleted {
+	display:       inline-flex;
+	align-items:   center;
+	gap:           6px;
+	font-size:     12px;
+	padding:       5px 9px;
+	border:        1px dashed #dcdcde;
+	border-radius: 6px;
+	color:         #787c82;
+	font-style:    italic;
+}
+
+.psbdx-admin-reply-box {
+	border-top: 1px solid #e2e8f0;
+	padding-top: 12px;
+}
+
+.psbdx-admin-reply-attach-row {
+	display:     flex;
+	align-items: center;
+	gap:         10px;
+	margin:      8px 0;
+}
+
+.psbdx-admin-reply-attach-btn {
+	display:       inline-flex;
+	align-items:   center;
+	gap:           5px;
+	font-size:     12px;
+	color:         #646970;
+	cursor:        pointer;
+	padding:       5px 10px;
+	border:        1px dashed #c3c4c7;
+	border-radius: 6px;
+}
+
+.psbdx-admin-reply-attach-btn:hover {
+	color: #2271b1;
+	border-color: #2271b1;
+}
+
+.psbdx-admin-reply-file-name {
+	font-size: 12px;
+	color:     #646970;
+	overflow-wrap: anywhere;
+}
+
+/* ── Attachments meta box ─────────────────────────────────────────────────── */
+.psbdx-attachments-list {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.psbdx-attachment-row {
+	display:     flex;
+	align-items: center;
+	gap:         8px;
+	padding:     6px;
+	border:      1px solid #e2e8f0;
+	border-radius: 6px;
+}
+
+.psbdx-attachment-thumb {
+	flex:          0 0 auto;
+	width:         36px;
+	height:        36px;
+	border-radius: 4px;
+	overflow:      hidden;
+	background:    #f0f0f1;
+	display:       flex;
+	align-items:   center;
+	justify-content: center;
+}
+
+.psbdx-attachment-thumb img {
+	width:      100%;
+	height:     100%;
+	object-fit: cover;
+	display:    block;
+}
+
+.psbdx-attachment-meta {
+	flex:      1 1 auto;
+	min-width: 0;
+	display:   flex;
+	flex-direction: column;
+}
+
+.psbdx-attachment-filename {
+	font-size:     12px;
+	overflow:      hidden;
+	text-overflow: ellipsis;
+	white-space:   nowrap;
+}
+
+.psbdx-attachment-size {
+	font-size: 11px;
+	color:     #787c82;
+}
+
+.psbdx-attachment-delete {
+	flex:   0 0 auto;
+	color:  #b32d2e;
+	cursor: pointer;
+	padding: 2px;
+}
+
+.psbdx-attachment-delete:hover {
+	color: #d63638;
+}
+
+.psbdx-admin-reply-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.psbdx-admin-reply-status {
+	font-size: 12px;
+	color: #64748b;
+}
+
+.psbdx-admin-reply-status.psbdx-is-error {
+	color: #991b1b;
+}
+
+/* ── Email settings tab ────────────────────────────────────────────────────── */
+.psbdx-email-tpl {
+	max-width:     920px;
+	border:        1px solid #e2e8f0;
+	border-radius: 8px;
+	background:    #fff;
+	margin-bottom: 16px;
+	overflow:      hidden;
+}
+
+.psbdx-email-tpl-header {
+	display:      flex;
+	align-items:  center;
+	gap:          8px;
+	padding:      12px 16px;
+	background:   #f8fafc;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+.psbdx-email-tpl-toggle {
+	margin-left: auto;
+}
+
+.psbdx-email-tpl-body {
+	padding: 16px;
+}
+
+/* ── AI Response Log page ─────────────────────────────────────────────────── */
+.psbdx-table-responsive {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.psbdx-ai-log-table th,
+.psbdx-ai-log-table td {
+	vertical-align: top;
+}
+
+.psbdx-ai-log-details summary {
+	cursor: pointer;
+	color: #4f46e5;
+	font-size: 12px;
+}
+
+.psbdx-ai-log-details pre {
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 6px;
+	padding: 8px 10px;
+	font-size: 11px;
+	max-width: 420px;
+	max-height: 200px;
+	overflow: auto;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.psbdx-empty-state {
+	background: #f8fafc;
+	border: 1px dashed #e2e8f0;
+	border-radius: 8px;
+	padding: 24px;
+	text-align: center;
+	color: #64748b;
+	max-width: 920px;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — tablets and the WP admin-menu collapse breakpoint (≤ 782 px)
+   ════════════════════════════════════════════════════════════════════════════ */
+@media ( max-width: 900px ) {
+	.psbdx-support-layout {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media ( max-width: 782px ) {
+
+	/* NOTE: the Responses list table (edit.php?post_type=psbdx_report_log)
+	   is intentionally left alone here. WordPress already collapses post
+	   list tables on narrow screens to the Title column plus a "Show more
+	   details" toggle for the rest — forcing a min-width/horizontal-scroll
+	   table on top of that fought the native behavior and caused columns
+	   like Ticket ID to overlap instead of stacking cleanly. */
+
+	/* Safety net: any wide table inside our own custom admin pages (which
+	   don't have WordPress's built-in list-table collapse behavior)
+	   scrolls horizontally instead of squeezing columns unreadably or
+	   breaking the page layout. */
+	.psbdx-srm-tools table.widefat,
+	.psbdx-ai-log-table {
+		display: block;
+		width: 100%;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.psbdx-srm-tools table.widefat thead,
+	.psbdx-srm-tools table.widefat tbody,
+	.psbdx-srm-tools table.widefat tr {
+		width: 100%;
+	}
+
+	/* Settings/API/Repair page tab bar: scroll horizontally instead of
+	   wrapping into a cramped multi-row stack of tabs on narrow screens. */
+	.psbdx-srm-tools .nav-tab-wrapper {
+		display:          flex;
+		flex-wrap:        nowrap;
+		overflow-x:       auto;
+		-webkit-overflow-scrolling: touch;
+		white-space:      nowrap;
+		padding-bottom:   0;
+	}
+
+	.psbdx-srm-tools .nav-tab-wrapper .nav-tab {
+		flex:   0 0 auto;
+		margin-bottom: 0;
+	}
+
+	/* Comfortable tap targets for buttons/inputs on our own pages. */
+	.psbdx-srm-tools .button,
+	.psbdx-srm-tools input[type="text"],
+	.psbdx-srm-tools input[type="number"],
+	.psbdx-srm-tools input[type="email"],
+	.psbdx-srm-tools select {
+		min-height: 38px;
+	}
+
+	/* Captcha settings: stack label above field instead of a cramped
+	   fixed-width label column. */
+	.psbdx-captcha-field-row {
+		grid-template-columns: 1fr;
+		gap: 4px;
+	}
+
+	.psbdx-ai-log-details pre {
+		max-width: 70vw;
+	}
+
+	.psbdx-ticket-header-meta {
+		margin-left: 0;
+		width: 100%;
+	}
+
+	.psbdx-ai-summary-head {
+		align-items: flex-start;
+	}
+
+	#psbdx-summarize-btn {
+		width: 100%;
+		justify-content: center;
+	}
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — phones (≤ 480 px)
+   ════════════════════════════════════════════════════════════════════════════ */
+@media ( max-width: 480px ) {
+	.psbdx-response-message,
+	.psbdx-ai-summary-panel,
+	.psbdx-empty-state {
+		padding: 12px 14px;
+	}
+
+	.psbdx-response-chip {
+		font-size: 11px;
+		padding: 4px 10px;
+	}
+
+	.psbdx-ai-log-details pre {
+		max-width: 62vw;
+		font-size: 10px;
+	}
+}
