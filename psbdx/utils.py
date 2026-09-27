@@ -24,10 +24,21 @@ class C:
     MAGENTA = "\033[35m"
     CYAN = "\033[36m"
 
-    @staticmethod
-    def disable():
-        for attr in ("RESET", "BOLD", "DIM", "RED", "GREEN", "YELLOW", "BLUE", "MAGENTA", "CYAN"):
-            setattr(C, attr, "")
+    _ATTRS = ("RESET", "BOLD", "DIM", "RED", "GREEN", "YELLOW", "BLUE", "MAGENTA", "CYAN")
+    _ORIGINAL = {}
+
+    @classmethod
+    def disable(cls):
+        for attr in cls._ATTRS:
+            if attr not in cls._ORIGINAL:
+                cls._ORIGINAL[attr] = getattr(cls, attr)
+            setattr(cls, attr, "")
+
+    @classmethod
+    def enable(cls):
+        for attr in cls._ATTRS:
+            if attr in cls._ORIGINAL:
+                setattr(cls, attr, cls._ORIGINAL[attr])
 
 
 if not sys.stdout.isatty():
@@ -88,6 +99,13 @@ def data_dir():
 
 def cloudflared_dir():
     d = os.path.expanduser("~/.cloudflared")
+    os.makedirs(d, exist_ok=True)
+    return d
+
+
+def logs_dir():
+    """Where background-tunnel log files live."""
+    d = os.path.join(data_dir(), "logs")
     os.makedirs(d, exist_ok=True)
     return d
 

@@ -16,6 +16,7 @@ DATA_FILE = os.path.join(utils.data_dir(), "data.json")
 DEFAULT = {
     "tunnels": [],       # list of tunnel records, see new_tunnel_record()
     "commands": {},      # {command_name: tunnel_id}
+    "settings": {},       # {setting_name: value} - nav mode, colors, etc.
 }
 
 
@@ -27,6 +28,7 @@ def _load():
             data = json.load(f)
         data.setdefault("tunnels", [])
         data.setdefault("commands", {})
+        data.setdefault("settings", {})
         return data
     except (json.JSONDecodeError, OSError):
         return json.loads(json.dumps(DEFAULT))
@@ -111,3 +113,40 @@ def remove_command(command_name):
 
 def all_commands():
     return _load()["commands"]
+
+
+# --------------------------------------------------------------------------
+# Settings (navigation style, color preference, etc.)
+# --------------------------------------------------------------------------
+def get_setting(key, default=None):
+    return _load().get("settings", {}).get(key, default)
+
+
+def set_setting(key, value):
+    data = _load()
+    data.setdefault("settings", {})[key] = value
+    _save(data)
+
+
+# --------------------------------------------------------------------------
+# Backup / restore - the whole data.json (tunnels, commands, settings) as
+# a single portable file the user can move to another device or keep as
+# a safety copy before experimenting.
+# --------------------------------------------------------------------------
+def export_backup(path):
+    data = _load()
+    path = os.path.expanduser(path)
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
+    return path
+
+
+def import_backup(path):
+    path = os.path.expanduser(path)
+    with open(path, "r") as f:
+        data = json.load(f)
+    data.setdefault("tunnels", [])
+    data.setdefault("commands", {})
+    data.setdefault("settings", {})
+    _save(data)
+    return data

@@ -27,7 +27,9 @@ Open a new terminal session afterwards if `psbdx` isn't found right away.
 psbdx cloud
 ```
 
-This opens the interactive menu:
+The very first time you run it, psbdx asks how you'd like to navigate its
+menus — see **Navigation styles** below. After that, it opens the
+interactive menu:
 
 - **Create a new tunnel**
   - **Quick mode** — no domain required. Just give the local port your app
@@ -37,7 +39,9 @@ This opens the interactive menu:
     browser link to authorize), then give a subdomain + your domain
     (e.g. `app` + `example.com`) and the port. psbdx creates the tunnel,
     writes the config, and points the DNS record at it automatically.
-- **Manage existing tunnels** — list, start, or delete saved tunnels.
+- **Manage existing tunnels** — list, start (foreground or
+  background), stop, check reachability, view logs, copy the public URL,
+  or delete saved tunnels. See **Running in the background** below.
 - **Manage domains** — see which hostnames are in use, (re)connect your
   Cloudflare account, or route another subdomain to an existing tunnel.
 - **Manage start commands** — turn any saved tunnel into a one-word
@@ -45,6 +49,41 @@ This opens the interactive menu:
 - **Add an existing tunnel manually** — if you already created/run a
   tunnel yourself (see "Existing tunnels" below), tell psbdx how it's
   started and it'll track it from then on, no auto-detection needed.
+- **Settings** — switch navigation styles, toggle colored output, or
+  back up / restore your saved tunnels and commands as a single JSON
+  file.
+
+### Navigation styles
+
+psbdx supports two ways to move through its menus, chosen once on first
+run (and changeable anytime from **Settings**):
+
+- **Number navigation** — the classic style. Type the number next to an
+  option and press Enter.
+- **Arrow navigation** — move a `❯` cursor with the Up/Down arrow keys
+  (the ones right above Termux's on-screen keyboard work great) and press
+  Enter to pick. A digit key still jumps straight to that option, and `q`
+  cancels back to number navigation for that one prompt.
+
+If arrow navigation isn't usable in your terminal (e.g. input is being
+piped in from a script), psbdx quietly falls back to number navigation
+instead of getting stuck.
+
+### Running in the background
+
+From **Manage existing tunnels**, pick a tunnel and choose **Start it in
+the background** to launch it detached, so it keeps running after you
+leave the menu (or close the app). psbdx tracks its process id and logs:
+
+- **View recent logs** tails the last lines of that run
+- **Check if it's reachable** sends a quick HTTP request to confirm it's
+  actually serving traffic
+- **Copy its URL to clipboard** (via `termux-clipboard-set` on Termux)
+- **Stop its background run** sends it a clean shutdown signal
+
+For quick tunnels, psbdx watches the log for the `*.trycloudflare.com`
+URL cloudflared prints on startup and shows it to you (and copies it to
+the clipboard on Termux) as soon as it appears.
 
 ### Existing tunnels you created outside psbdx
 
@@ -100,7 +139,9 @@ is the closest equivalent).
 ## Data & files
 
 - `~/.psbdx` — the installed program itself (git checkout, updated via `psbdx update`)
-- `~/.psbdx-data/data.json` — your saved tunnels and start commands
+- `~/.psbdx-data/data.json` — your saved tunnels, start commands, and
+  settings (navigation style, color preference)
+- `~/.psbdx-data/logs/` — output from tunnels started in the background
 - `~/.cloudflared/` — cloudflared's own config, credentials, and login cert
 
 Uninstalling removes the first two. It does **not** delete your tunnels or

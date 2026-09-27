@@ -5,20 +5,29 @@ own-domain), manage saved tunnels/domains, and set up one-word start
 commands.
 """
 
+import datetime
 import os
 import re
+import signal
 import stat
 import subprocess
 import sys
+import time
+import urllib.error
+import urllib.request
 
 from . import cloudflared as cf
+from . import nav
 from . import storage
 from . import utils
-from .utils import C, ok, warn, err, info, title, ask, ask_port, ask_choice, \
+from .utils import C, ok, warn, err, info, title, ask, ask_port, \
     ask_subdomain, ask_domain, confirm, slugify, bin_dir, which
 
 
 def main_menu():
+    if not storage.get_setting("colors_enabled", True):
+        C.disable()
+
     if not cf.ensure_installed():
         err("Can't continue without cloudflared. Fix the install and try again.")
         return
@@ -37,9 +46,10 @@ def main_menu():
         discovered = _discover() if cf.is_logged_in() else []
         if discovered:
             menu.append(("import", f"Import {len(discovered)} tunnel(s) found outside psbdx"))
+        menu.append(("settings", "Settings"))
         menu.append(("exit", "Exit"))
 
-        choice = ask_choice("What would you like to do?", menu)
+        choice = nav.ask_choice("What would you like to do?", menu)
         print()
         if choice == "create":
             create_tunnel_flow()
@@ -53,6 +63,8 @@ def main_menu():
             add_manual_tunnel_flow()
         elif choice == "import":
             import_tunnels_flow(discovered)
+        elif choice == "settings":
+            settings_flow()
         elif choice == "exit":
             print("Bye!")
             return
@@ -154,7 +166,7 @@ def add_manual_tunnel_flow():
     hostname = ask("Hostname it's reachable at (e.g. api.example.com), or leave blank",
                     required=False) or None
 
-    run_mode = ask_choice("How do you normally start it?", [
+    run_mode = nav.ask_choice("How do you normally start it?", [
         ("named", "cloudflared tunnel run <name>  (a named/local tunnel)"),
         ("token", "cloudflared tunnel run --token <token>  (from the Zero Trust dashboard)"),
     ])
@@ -198,7 +210,7 @@ def add_manual_tunnel_flow():
 # --------------------------------------------------------------------------
 def create_tunnel_flow():
     title("Create a tunnel")
-    mode = ask_choice("Choose a mode:", [
+    mode = nav.ask_choice("Choose a mode:", [
         ("quick", "Quick mode — no domain needed, get an instant *.trycloudflare.com URL"),
         ("domain", "Own domain — use a domain you've added to Cloudflare"),
     ])
@@ -343,15 +355,27 @@ def _print_tunnels(tunnels):
             where = f"(no hostname set) → localhost:{t['port']}"
         via = f" {C.DIM}[token]{C.RESET}" if t.get("token") else ""
         cmd = f", start command: {C.CYAN}{t['start_command']}{C.RESET}" if t.get("start_command") else ""
-        print(f"  {C.CYAN}{i}{C.RESET}. {C.BOLD}{t['name']}{C.RESET} — {where}{via}{cmd}")
+        running = is_bg_running(t)
+        status = f" {C.GREEN}● running{C.RESET}" if running else ""
+        bg_url = f" {C.DIM}({t['bg_url']}){C.RESET}" if running and t.get("bg_url") else ""
+        print(f"  {C.CYAN}{i}{C.RESET}. {C.BOLD}{t['name']}{C.RESET} — {where}{via}{cmd}{status}{bg_url}")
 
 
 def manage_tunnels_flow():
     title("Manage tunnels")
-    tunnels = storage.list_tunnels()
-    if not tunnels:
+    all_tunnels = storage.list_tunnels()
+    tunnels = all_tunnels
+    if not all_tunnels:
         warn("No tunnels saved yet. Create one, or import ones made outside psbdx.")
     else:
+        if len(all_tunnels) > 8:
+            query = ask("Search by name (Enter to show all)", required=False)
+            if query:
+                filtered = [t for t in all_tunnels if query.lower() in (t["name"] or "").lower()]
+                if filtered:
+                    tunnels = filtered
+                else:
+                    warn("No matches — showing all instead.")
         _print_tunnels(tunnels)
 
     if cf.is_logged_in():
@@ -372,18 +396,181 @@ def manage_tunnels_flow():
         return
     record = tunnels[int(idx) - 1]
 
-    action = ask_choice(f"'{record['name']}' — what do you want to do?", [
-        ("start", "Start it now"),
-        ("command", "Set/change its start command"),
-        ("delete", "Delete it"),
-        ("back", "Back"),
-    ])
+    running = is_bg_running(record)
+    actions = [("start", "Start it now (foreground)")]
+    if running:
+        actions.append(("stop_bg", "Stop its background run"))
+    else:
+        actions.append(("start_bg", "Start it in the background"))
+    if record.get("log_path") and os.path.exists(record["log_path"]):
+        actions.append(("logs", "View recent logs"))
+    if record.get("bg_url") or record.get("hostname"):
+        actions.append(("copy_url", "Copy its URL to clipboard"))
+        actions.append(("check", "Check if it's reachable"))
+    actions.append(("command", "Set/change its start command"))
+    actions.append(("delete", "Delete it"))
+    actions.append(("back", "Back"))
+
+    action = nav.ask_choice(f"'{record['name']}' — what do you want to do?", actions)
     if action == "start":
         run_tunnel(record)
+    elif action == "start_bg":
+        start_tunnel_background(record)
+    elif action == "stop_bg":
+        stop_tunnel_background(record)
+    elif action == "logs":
+        show_tunnel_logs(record)
+    elif action == "copy_url":
+        url = record.get("bg_url") or (f"https://{record['hostname']}" if record.get("hostname") else None)
+        if url:
+            info(url)
+            _maybe_copy_to_clipboard(url)
+        else:
+            warn("No URL known for this tunnel yet — start it first.")
+    elif action == "check":
+        check_tunnel_reachable(record)
     elif action == "command":
         create_start_command(record["id"])
     elif action == "delete":
         _delete_tunnel(record)
+
+
+# --------------------------------------------------------------------------
+# Background running - start a tunnel detached (survives this menu
+# closing), track its pid/log so it can be checked on, tailed, or
+# stopped later; plus a quick reachability check and clipboard copy.
+# --------------------------------------------------------------------------
+def _log_path(record):
+    return os.path.join(utils.logs_dir(), f"{record['id']}.log")
+
+
+def _build_run_cmd(record):
+    """Same command run_tunnel() would use in the foreground, as an
+    argv list, so background mode launches the identical process."""
+    if record["mode"] == "quick":
+        return ["cloudflared", "tunnel", "--url", f"http://localhost:{record['port']}"]
+    if record.get("token"):
+        return ["cloudflared", "tunnel", "run", "--token", record["token"]]
+    cmd = ["cloudflared"]
+    if record.get("config_path"):
+        cmd += ["--config", record["config_path"]]
+    cmd += ["tunnel", "run", record["cf_name"]]
+    return cmd
+
+
+def is_bg_running(record):
+    pid = record.get("pid")
+    if not pid:
+        return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except (ProcessLookupError, PermissionError):
+        return False
+    except OSError:
+        return False
+
+
+def start_tunnel_background(record):
+    if is_bg_running(record):
+        warn(f"'{record['name']}' is already running in the background (pid {record['pid']}).")
+        return
+    log_path = _log_path(record)
+    cmd = _build_run_cmd(record)
+    info(f"Starting '{record['name']}' in the background...")
+    try:
+        logf = open(log_path, "w")
+        proc = subprocess.Popen(
+            cmd, stdout=logf, stderr=subprocess.STDOUT,
+            stdin=subprocess.DEVNULL, start_new_session=True,
+        )
+    except Exception as e:
+        err(f"Couldn't start it: {e}")
+        return
+    storage.update_tunnel(record["id"], pid=proc.pid, log_path=log_path, bg_url=None)
+    ok(f"Running in the background (pid {proc.pid}). Logs: {log_path}")
+
+    if record["mode"] == "quick":
+        info("Waiting for the *.trycloudflare.com URL...")
+        url = _wait_for_quick_url(log_path)
+        if url:
+            storage.update_tunnel(record["id"], bg_url=url)
+            ok(f"Live at {C.BOLD}{url}{C.RESET}")
+            _maybe_copy_to_clipboard(url)
+        else:
+            warn("Didn't see a URL yet — check the logs in a moment.")
+
+
+def _wait_for_quick_url(log_path, timeout=15):
+    deadline = time.time() + timeout
+    pattern = re.compile(r"https://[a-zA-Z0-9-]+\.trycloudflare\.com")
+    while time.time() < deadline:
+        try:
+            with open(log_path, "r") as f:
+                text = f.read()
+            m = pattern.search(text)
+            if m:
+                return m.group(0)
+        except OSError:
+            pass
+        time.sleep(1)
+    return None
+
+
+def stop_tunnel_background(record):
+    pid = record.get("pid")
+    if not pid or not is_bg_running(record):
+        warn(f"'{record['name']}' isn't running in the background.")
+        storage.update_tunnel(record["id"], pid=None)
+        return
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except OSError as e:
+        err(f"Couldn't stop it: {e}")
+        return
+    storage.update_tunnel(record["id"], pid=None)
+    ok(f"Stopped '{record['name']}'.")
+
+
+def show_tunnel_logs(record, lines=30):
+    log_path = record.get("log_path")
+    if not log_path or not os.path.exists(log_path):
+        warn("No logs yet for this tunnel.")
+        return
+    with open(log_path, "r") as f:
+        content = f.readlines()
+    title(f"Last {min(lines, len(content))} log line(s) — {record['name']}")
+    for line in content[-lines:]:
+        print(line.rstrip("\n"))
+    print()
+
+
+def check_tunnel_reachable(record):
+    url = record.get("bg_url") or (f"https://{record['hostname']}" if record.get("hostname") else None)
+    if not url:
+        warn("No public URL known for this tunnel yet — start it first.")
+        return
+    info(f"Checking {url} ...")
+    try:
+        req = urllib.request.Request(url, method="HEAD")
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            ok(f"Reachable — HTTP {resp.status}.")
+    except urllib.error.HTTPError as e:
+        # Any HTTP response, even an error page, means the tunnel itself
+        # is up and forwarding traffic — the status just came from
+        # whatever's running on the local port.
+        ok(f"Reachable — HTTP {e.code} (tunnel is up; that status came from your app).")
+    except Exception as e:
+        err(f"Not reachable: {e}")
+
+
+def _maybe_copy_to_clipboard(text):
+    if which("termux-clipboard-set"):
+        try:
+            subprocess.run(["termux-clipboard-set"], input=text, text=True, timeout=5)
+            info("Copied to clipboard.")
+        except Exception:
+            pass
 
 
 def _delete_tunnel(record):
@@ -432,7 +619,7 @@ def manage_domains_flow():
         menu.append(("import", "Import the tunnel(s) listed above"))
     menu.append(("back", "Back"))
 
-    choice = ask_choice("What next?", menu)
+    choice = nav.ask_choice("What next?", menu)
     if choice == "login":
         cf.login()
     elif choice == "add":
@@ -477,7 +664,7 @@ def manage_commands_flow():
             label = t["name"] if t else "(missing tunnel)"
             print(f"  • {C.CYAN}{cmd}{C.RESET} → {label}")
     print()
-    choice = ask_choice("What next?", [
+    choice = nav.ask_choice("What next?", [
         ("add", "Add a start command to a tunnel"),
         ("remove", "Remove a start command"),
         ("back", "Back"),
@@ -542,3 +729,81 @@ def _remove_command_file(name):
     storage.remove_command(name)
     if tunnel_id:
         storage.update_tunnel(tunnel_id, start_command=None)
+
+
+# --------------------------------------------------------------------------
+# Settings - navigation style, color output, backup/restore of psbdx's
+# own data (tunnels, commands, settings) as one portable JSON file.
+# --------------------------------------------------------------------------
+def settings_flow():
+    while True:
+        title("Settings")
+        nav_mode = nav.get_nav_mode() or "number"
+        colors = storage.get_setting("colors_enabled", True)
+        print(f"Navigation style: {C.BOLD}{nav_mode}{C.RESET}")
+        print(f"Colored output:   {C.BOLD}{'on' if colors else 'off'}{C.RESET}\n")
+
+        choice = nav.ask_choice("Settings", [
+            ("nav", "Change navigation style"),
+            ("colors", "Toggle colored output"),
+            ("backup", "Back up tunnels & commands to a file"),
+            ("restore", "Restore from a backup file"),
+            ("back", "Back to main menu"),
+        ])
+        print()
+        if choice == "nav":
+            nav.change_nav_mode()
+        elif choice == "colors":
+            _toggle_colors()
+        elif choice == "backup":
+            _backup_flow()
+        elif choice == "restore":
+            _restore_flow()
+        elif choice == "back":
+            return
+
+
+def _toggle_colors():
+    current = storage.get_setting("colors_enabled", True)
+    new_val = not current
+    storage.set_setting("colors_enabled", new_val)
+    if new_val:
+        C.enable()
+        ok("Colored output turned on.")
+    else:
+        C.disable()
+        print("Colored output turned off.")
+
+
+def _backup_flow():
+    title("Back up psbdx data")
+    default_name = f"psbdx-backup-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+    default_path = os.path.join(os.path.expanduser("~"), default_name)
+    path = ask("Save backup to", default=default_path)
+    try:
+        saved_to = storage.export_backup(path)
+    except OSError as e:
+        err(f"Couldn't write the backup: {e}")
+        return
+    ok(f"Backup saved to {saved_to}")
+    info("This file has your tunnels, start commands and settings in plain "
+         "text (including any stored run tokens) - keep it somewhere safe.")
+
+
+def _restore_flow():
+    title("Restore from backup")
+    path = ask("Path to a psbdx backup .json file")
+    expanded = os.path.expanduser(path)
+    if not os.path.exists(expanded):
+        err("File not found.")
+        return
+    if not confirm("This replaces your current tunnels, commands and settings "
+                    "with what's in the backup. Continue?", default=False):
+        print("Cancelled.")
+        return
+    try:
+        storage.import_backup(path)
+    except (OSError, ValueError) as e:
+        err(f"Couldn't read that backup: {e}")
+        return
+    ok("Restored. Reopen 'Manage existing tunnels' to see them.")
