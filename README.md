@@ -122,10 +122,22 @@ mysite
 
 ...and that tunnel starts immediately — no menus.
 
+Add `-bg` to the end of any start command to run it as a background
+service instead — it launches detached and hands your terminal back:
+
+```bash
+mysite -bg
+```
+
+Use *Manage tunnels* to view its logs or stop it later. Commands made
+before this feature existed pick up `-bg` automatically after
+`psbdx update`.
+
 ### Other commands
 
 ```bash
 psbdx start <name-or-id>   # start a saved tunnel directly
+psbdx start <name-or-id> -bg   # ...or run it in the background
 psbdx update                # pull the latest version of psbdx
 psbdx uninstall              # remove psbdx from this device
 psbdx help                   # show usage

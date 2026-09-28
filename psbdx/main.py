@@ -41,9 +41,9 @@ def cmd_cloud(_args):
 
 def cmd_start(args):
     if not args.name:
-        err("Usage: psbdx start <tunnel-name-or-id>")
+        err("Usage: psbdx start <tunnel-name-or-id> [-bg]")
         sys.exit(1)
-    cloud.start_by_id(args.name)
+    cloud.start_by_id(args.name, background=args.background)
 
 
 def cmd_update(_args):
@@ -58,6 +58,10 @@ def cmd_update(_args):
         err("Update failed. Resolve any local changes in ~/.psbdx and try again.")
         sys.exit(1)
     ok("psbdx is up to date.")
+
+    updated = cloud.regenerate_start_commands()
+    if updated:
+        info(f"Refreshed {updated} existing start command(s) so they pick up the latest features.")
 
 
 def cmd_uninstall(_args):
@@ -93,6 +97,7 @@ def cmd_help(_args):
 {C.BOLD}Commands:{C.RESET}
   {C.CYAN}cloud{C.RESET}       Open the tunnel manager (create/manage tunnels & domains)
   {C.CYAN}start{C.RESET} NAME  Start a saved tunnel directly by its name or id
+                (add {C.CYAN}-bg{C.RESET} to run it in the background, e.g. 'psbdx start mysite -bg')
   {C.CYAN}update{C.RESET}      Pull the latest version of psbdx
   {C.CYAN}uninstall{C.RESET}   Remove psbdx from this device
   {C.CYAN}help{C.RESET}        Show this message
@@ -111,6 +116,8 @@ def build_parser():
 
     p_start = sub.add_parser("start")
     p_start.add_argument("name", nargs="?")
+    p_start.add_argument("-bg", "--background", action="store_true",
+                          help="Run this tunnel in the background instead of the foreground.")
 
     sub.add_parser("update")
     sub.add_parser("uninstall")

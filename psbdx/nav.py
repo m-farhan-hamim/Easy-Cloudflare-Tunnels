@@ -14,6 +14,7 @@ The style is picked once, the first time psbdx runs. It's saved in
 It can be changed anytime from the main menu's Settings screen.
 """
 
+import os
 import sys
 
 from . import storage
@@ -41,27 +42,42 @@ def supports_arrow_nav():
 def _read_key():
     """Blocks for one keypress and resolves arrow-key escape sequences.
     Returns 'up' / 'down' / 'left' / 'right' / 'enter' / 'quit' / a
-    single digit character / or '' for anything else we don't act on."""
+    single digit character / or '' for anything else we don't act on.
+
+    Reads raw bytes straight from the file descriptor: going through
+    sys.stdin's buffer would swallow the whole 'ESC [ A' sequence in one
+    read, leaving select() nothing to see and making every arrow press
+    look like a lone Esc."""
     fd = sys.stdin.fileno()
     old = termios.tcgetattr(fd)
     try:
         tty.setraw(fd)
-        ch = sys.stdin.read(1)
+        data = os.read(fd, 1)
+        if not data:
+            return "quit"  # EOF
+        ch = data.decode("latin-1")
         if ch in ("\r", "\n"):
             return "enter"
-        if ch == "\x03":  # Ctrl+C
-            return "quit"
-        if ch in ("q", "Q"):
+        if ch in ("\x03", "q", "Q"):  # Ctrl+C, q
             return "quit"
         if ch == "\x1b":
-            ready, _, _ = select.select([sys.stdin], [], [], 0.05)
-            if not ready:
-                return "quit"  # a lone Esc press
-            ch2 = sys.stdin.read(1)
-            if ch2 != "[":
+            # Arrow keys arrive as ESC [ A/B/C/D (or ESC O A/B/C/D in
+            # application mode). Give the rest of the sequence a moment
+            # to show up; if it never does, it was a lone Esc press.
+            seq = ""
+            while len(seq) < 2:
+                ready, _, _ = select.select([fd], [], [], 0.15)
+                if not ready:
+                    break
+                more = os.read(fd, 1)
+                if not more:
+                    break
+                seq += more.decode("latin-1")
+            if len(seq) == 2 and seq[0] in ("[", "O"):
+                return {"A": "up", "B": "down", "C": "right", "D": "left"}.get(seq[1], "")
+            if not seq:
                 return "quit"
-            ch3 = sys.stdin.read(1)
-            return {"A": "up", "B": "down", "C": "right", "D": "left"}.get(ch3, "")
+            return ""  # some other escape sequence we don't handle
         if ch.isdigit():
             return ch
         return ""

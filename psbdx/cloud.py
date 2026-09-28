@@ -324,14 +324,17 @@ def run_tunnel(record):
         ok("Tunnel stopped.")
 
 
-def start_by_id(tunnel_id_or_name):
+def start_by_id(tunnel_id_or_name, background=False):
     record = storage.get_tunnel(tunnel_id_or_name)
     if not record:
         err(f"No saved tunnel matches '{tunnel_id_or_name}'.")
         sys.exit(1)
     if not cf.ensure_installed():
         sys.exit(1)
-    run_tunnel(record)
+    if background:
+        start_tunnel_background(record)
+    else:
+        run_tunnel(record)
 
 
 # --------------------------------------------------------------------------
@@ -690,6 +693,21 @@ def manage_commands_flow():
             warn("No such command.")
 
 
+def _write_wrapper_script(name, tunnel_id):
+    """Writes/overwrites the one-word launcher for a tunnel. Any extra
+    arguments typed after the command are forwarded straight to
+    'psbdx start' — e.g. 'mysite -bg' runs it in the background."""
+    wrapper_path = os.path.join(bin_dir(), name)
+    main_py = os.path.join(utils.install_dir(), "psbdx", "main.py")
+    bash_path = which("bash") or which("sh") or "/bin/sh"
+    script = f"#!{bash_path}\nexec python3 \"{main_py}\" start \"{tunnel_id}\" \"$@\"\n"
+    with open(wrapper_path, "w") as f:
+        f.write(script)
+    st = os.stat(wrapper_path)
+    os.chmod(wrapper_path, st.st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+    return wrapper_path
+
+
 def create_start_command(tunnel_id):
     record = storage.get_tunnel(tunnel_id)
     if not record:
@@ -707,18 +725,27 @@ def create_start_command(tunnel_id):
             continue
         break
 
-    wrapper_path = os.path.join(bin_dir(), name)
-    main_py = os.path.join(utils.install_dir(), "psbdx", "main.py")
-    bash_path = which("bash") or which("sh") or "/bin/sh"
-    script = f"#!{bash_path}\nexec python3 \"{main_py}\" start \"{record['id']}\"\n"
-    with open(wrapper_path, "w") as f:
-        f.write(script)
-    st = os.stat(wrapper_path)
-    os.chmod(wrapper_path, st.st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
-
+    _write_wrapper_script(name, record["id"])
     storage.set_command(name, record["id"])
     storage.update_tunnel(record["id"], start_command=name)
-    ok(f"Done — just type '{C.BOLD}{name}{C.RESET}' anytime to start this tunnel.")
+    ok(f"Done — just type '{C.BOLD}{name}{C.RESET}' anytime to start this tunnel "
+       f"(add {C.CYAN}-bg{C.RESET} to run it in the background, e.g. '{name} -bg').")
+
+
+def regenerate_start_commands():
+    """Rewrites every installed one-word launcher with the current
+    wrapper template. Safe to call anytime — a no-op if nothing's
+    changed. Used after 'psbdx update' so existing commands (created
+    before a feature like -bg existed) pick it up without the user
+    having to recreate them."""
+    updated = 0
+    for name, tunnel_id in storage.all_commands().items():
+        wrapper_path = os.path.join(bin_dir(), name)
+        if not os.path.exists(wrapper_path):
+            continue  # user removed it by hand; don't resurrect it
+        _write_wrapper_script(name, tunnel_id)
+        updated += 1
+    return updated
 
 
 def _remove_command_file(name):
