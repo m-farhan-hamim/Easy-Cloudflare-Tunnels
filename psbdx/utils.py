@@ -9,6 +9,8 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
+import time
 
 # --------------------------------------------------------------------------
 # Colors (safe no-ops if the terminal doesn't support them)
@@ -66,6 +68,71 @@ def title(msg):
     print(f"\n{C.BOLD}{C.MAGENTA}{bar}{C.RESET}")
     print(f"{C.BOLD}{C.MAGENTA} {msg}{C.RESET}")
     print(f"{C.BOLD}{C.MAGENTA}{bar}{C.RESET}\n")
+
+
+# --------------------------------------------------------------------------
+# Loading spinner - a small animated TUI element for anything that takes
+# a beat: a deliberate pause on startup, waiting on a network call, etc.
+# Degrades to a single static line when the terminal can't animate
+# (piped input/output, or NO_COLOR-style non-interactive runs).
+# --------------------------------------------------------------------------
+_SPINNER_FRAMES = ("⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏")
+
+
+def _spin_animate(message, stop, frame_ref):
+    i = 0
+    while not stop.is_set():
+        frame = _SPINNER_FRAMES[i % len(_SPINNER_FRAMES)]
+        sys.stdout.write(f"\r{C.CYAN}{frame}{C.RESET} {message}{C.DIM}...{C.RESET} ")
+        sys.stdout.flush()
+        i += 1
+        stop.wait(0.08)
+    pad = len(message) + 6
+    sys.stdout.write("\r" + " " * pad + "\r")
+    sys.stdout.flush()
+
+
+def loading(message, seconds):
+    """Blocking animated spinner for a fixed duration - used for
+    deliberate pacing, e.g. the startup splash."""
+    if not sys.stdout.isatty():
+        print(f"{C.CYAN}...{C.RESET} {message}")
+        return
+    stop = threading.Event()
+    t = threading.Thread(target=_spin_animate, args=(message, stop, None), daemon=True)
+    t.start()
+    time.sleep(max(0.0, seconds))
+    stop.set()
+    t.join()
+
+
+def spin_while(message, fn, *args, **kwargs):
+    """Runs fn(*args, **kwargs) while an animated spinner plays in front
+    of it. Returns fn's result; re-raises whatever fn raised. Falls
+    back to a static line + a plain call when the terminal can't
+    animate (so it's always safe to wrap something with this)."""
+    if not sys.stdout.isatty():
+        print(f"{C.CYAN}...{C.RESET} {message}")
+        return fn(*args, **kwargs)
+    result = {}
+
+    def target():
+        try:
+            result["value"] = fn(*args, **kwargs)
+        except Exception as e:  # noqa: BLE001 - re-raised on the caller's thread
+            result["error"] = e
+
+    worker = threading.Thread(target=target, daemon=True)
+    worker.start()
+    stop = threading.Event()
+    spinner = threading.Thread(target=_spin_animate, args=(message, stop, None), daemon=True)
+    spinner.start()
+    worker.join()
+    stop.set()
+    spinner.join()
+    if "error" in result:
+        raise result["error"]
+    return result.get("value")
 
 
 # --------------------------------------------------------------------------

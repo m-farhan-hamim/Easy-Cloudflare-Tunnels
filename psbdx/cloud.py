@@ -30,6 +30,8 @@ def main_menu():
     if not storage.get_setting("colors_enabled", True):
         C.disable()
 
+    utils.loading("Starting psbdx", 2.0)
+
     if not cf.ensure_installed():
         err("Can't continue without cloudflared. Fix the install and try again.")
         return
@@ -810,8 +812,8 @@ def start_tunnel_background(record, quiet=False):
     ok(f"Running in the background (pid {proc.pid}). Logs: {log_path}")
 
     if record["mode"] == "quick":
-        info("Waiting for the *.trycloudflare.com URL...")
-        url = _wait_for_quick_url(log_path)
+        url = utils.spin_while("Waiting for the *.trycloudflare.com URL",
+                                _wait_for_quick_url, log_path)
         if url:
             storage.update_tunnel(record["id"], bg_url=url)
             ok(f"Live at {C.BOLD}{url}{C.RESET}")
@@ -905,16 +907,20 @@ def show_tunnel_logs(record, lines=30):
     print()
 
 
+def _do_reachability_check(url):
+    req = urllib.request.Request(url, method="HEAD")
+    with urllib.request.urlopen(req, timeout=8) as resp:
+        return resp.status
+
+
 def check_tunnel_reachable(record):
     url = _tunnel_url(record)
     if not url:
         warn("No public URL known for this tunnel yet — start it first.")
         return
-    info(f"Checking {url} ...")
     try:
-        req = urllib.request.Request(url, method="HEAD")
-        with urllib.request.urlopen(req, timeout=8) as resp:
-            ok(f"Reachable — HTTP {resp.status}.")
+        status = utils.spin_while(f"Checking {url}", _do_reachability_check, url)
+        ok(f"Reachable — HTTP {status}.")
     except urllib.error.HTTPError as e:
         # Any HTTP response, even an error page, means the tunnel itself
         # is up and forwarding traffic — the status just came from
@@ -1014,12 +1020,12 @@ def _add_domain_to_existing(tunnels):
     if not tunnels:
         warn("Create an own-domain tunnel first.")
         return
-    _print_tunnels(tunnels)
-    idx = ask("Add a route to which tunnel? (number)")
-    if not idx.isdigit() or not (1 <= int(idx) <= len(tunnels)):
-        warn("Invalid selection.")
+    options = [(t["id"], _tunnel_label(t), _tunnel_desc(t)) for t in tunnels]
+    options.append(("back", "Cancel"))
+    choice = nav.ask_choice("Add a route to which tunnel?", options)
+    if choice == "back":
         return
-    record = tunnels[int(idx) - 1]
+    record = storage.get_tunnel(choice)
     subdomain = ask_subdomain()
     hostname = f"{subdomain}.{record['domain']}"
     if cf.route_dns(record["cf_name"], hostname):
@@ -1046,30 +1052,30 @@ def manage_commands_flow():
             label = t["name"] if t else "(missing tunnel)"
             print(f"  • {C.CYAN}{cmd}{C.RESET} → {label}")
     print()
-    choice = nav.ask_choice("What next?", [
-        ("add", "Add a start command to a tunnel"),
-        ("remove", "Remove a start command"),
-        ("back", "Back"),
-    ])
+    menu = [("add", "Add a start command to a tunnel")]
+    if commands:
+        menu.append(("remove", "Remove a start command"))
+    menu.append(("back", "Back"))
+    choice = nav.ask_choice("What next?", menu)
     if choice == "add":
         tunnels = _list_tunnels_or_none()
         if not tunnels:
             return
-        _print_tunnels(tunnels)
-        idx = ask("Which tunnel? (number)")
-        if idx.isdigit() and 1 <= int(idx) <= len(tunnels):
-            create_start_command(tunnels[int(idx) - 1]["id"])
-        else:
-            warn("Invalid selection.")
+        options = [(t["id"], _tunnel_label(t), _tunnel_desc(t)) for t in tunnels]
+        options.append(("back", "Cancel"))
+        picked = nav.ask_choice("Which tunnel?", options)
+        if picked != "back":
+            create_start_command(picked)
     elif choice == "remove":
-        if not commands:
-            return
-        name = ask("Which command should be removed?")
-        if name in commands:
-            _remove_command_file(name)
-            ok(f"Removed '{name}'.")
-        else:
-            warn("No such command.")
+        options = []
+        for cmd, tid in commands.items():
+            t = storage.get_tunnel(tid)
+            options.append((cmd, cmd, f"→ {t['name']}" if t else "→ (missing tunnel)"))
+        options.append(("back", "Cancel"))
+        picked = nav.ask_choice("Remove which command?", options)
+        if picked != "back":
+            _remove_command_file(picked)
+            ok(f"Removed '{picked}'.")
 
 
 def _write_wrapper_script(name, tunnel_id):
@@ -1132,7 +1138,8 @@ def run_doctor():
 
     # network
     try:
-        socket.create_connection(("1.1.1.1", 443), timeout=4).close()
+        utils.spin_while("Checking internet connectivity",
+                          lambda: socket.create_connection(("1.1.1.1", 443), timeout=4).close())
         ok("Internet reachable")
     except OSError:
         err("Can't reach the internet (1.1.1.1:443) - tunnels won't connect")
